@@ -67,6 +67,9 @@ static int parse_encryption_algorithm(const char *alg_name,
     } else if (strcmp(alg_name, "chacha20") == 0 || strcmp(alg_name, "chacha") == 0) {
         *alg = ENC_CHACHA20;
         return GSEA_SUCCESS;
+    } else if (strcmp(alg_name, "salsa20") == 0 || strcmp(alg_name, "salsa") == 0) {
+        *alg = ENC_SALSA20;
+        return GSEA_SUCCESS;
     } else if (strcmp(alg_name, "des") == 0) {
         *alg = ENC_DES;
         LOG_ERROR("DES algorithm not yet implemented");

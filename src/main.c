@@ -9,6 +9,7 @@
 #include "compression/compression.h"
 #include "encryption/aes.h"
 #include "encryption/chacha20.h"
+#include "encryption/salsa20.h"
 #include "concurrency/thread_pool.h"
 #include "utils/arg_parser.h"
 #include <stdio.h>
@@ -98,6 +99,8 @@ static int process_file_operations(const char *input_path, const char *output_pa
             result = aes_encrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
         } else if (config->enc_alg == ENC_CHACHA20) {
             result = chacha20_encrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        } else if (config->enc_alg == ENC_SALSA20) {
+            result = salsa20_encrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
         } else {
             LOG_ERROR("Unsupported encryption algorithm");
             result = GSEA_ERROR_ENCRYPTION;
@@ -115,6 +118,8 @@ static int process_file_operations(const char *input_path, const char *output_pa
             result = aes_decrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
         } else if (config->enc_alg == ENC_CHACHA20) {
             result = chacha20_decrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        } else if (config->enc_alg == ENC_SALSA20) {
+            result = salsa20_decrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
         } else {
             LOG_ERROR("Unsupported encryption algorithm");
             result = GSEA_ERROR_ENCRYPTION;
@@ -139,6 +144,9 @@ static int process_file_operations(const char *input_path, const char *output_pa
                                    (uint8_t *)config->key, config->key_len);
             } else if (config->enc_alg == ENC_CHACHA20) {
                 result = chacha20_encrypt(current_input, current_output, 
+                                        (uint8_t *)config->key, config->key_len);
+            } else if (config->enc_alg == ENC_SALSA20) {
+                result = salsa20_encrypt(current_input, current_output, 
                                         (uint8_t *)config->key, config->key_len);
             } else {
                 LOG_ERROR("Unsupported encryption algorithm");

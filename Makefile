@@ -21,6 +21,7 @@ SOURCES = $(SRC_DIR)/main.c \
           $(SRC_DIR)/compression/rle.c \
           $(SRC_DIR)/encryption/aes.c \
           $(SRC_DIR)/encryption/chacha20.c \
+          $(SRC_DIR)/encryption/salsa20.c \
           $(SRC_DIR)/concurrency/thread_pool.c \
           $(SRC_DIR)/utils/arg_parser.c
 
