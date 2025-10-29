@@ -53,6 +53,8 @@ typedef enum {
 
 typedef enum {
     ENC_AES128,
+    ENC_CHACHA20,
+    ENC_SALSA20,
     ENC_DES,
     ENC_VIGENERE
 } encryption_algorithm_t;

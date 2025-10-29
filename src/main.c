@@ -6,8 +6,10 @@
 
 #include "common.h"
 #include "file_manager.h"
-#include "compression/lz77.h"
+#include "compression/compression.h"
 #include "encryption/aes.h"
+#include "encryption/chacha20.h"
+#include "encryption/salsa20.h"
 #include "concurrency/thread_pool.h"
 #include "utils/arg_parser.h"
 #include <stdio.h>
@@ -24,6 +26,18 @@ typedef struct {
     int *error_count;
     pthread_mutex_t *error_mutex;
 } process_args_t;
+
+/**
+ * @brief Obtiene el nombre legible del algoritmo de compresión
+ */
+static const char* get_compression_algorithm_name(compression_algorithm_t alg) {
+    switch (alg) {
+        case COMP_LZ77: return "LZ77";
+        case COMP_HUFFMAN: return "Huffman";
+        case COMP_RLE: return "RLE";
+        default: return "Unknown";
+    }
+}
 
 /**
  * @brief Procesa un archivo individual: compresión/descompresión y/o encriptación/desencriptación
@@ -59,8 +73,9 @@ static int process_file_operations(const char *input_path, const char *output_pa
     
     /* Primera operación */
     if (compress_first) {
-        if (config->verbose) LOG_INFO("  [1/2] Compressing...");
-        result = lz77_compress(current_input, current_output);
+        if (config->verbose) LOG_INFO("  [1/2] Compressing with %s...",
+                                      get_compression_algorithm_name(config->comp_alg));
+        result = compress_data(current_input, current_output, config->comp_alg);
         if (result != GSEA_SUCCESS) {
             LOG_ERROR("Compression failed");
             goto cleanup;
@@ -68,8 +83,9 @@ static int process_file_operations(const char *input_path, const char *output_pa
         current_input = &intermediate;
         current_output = &output;
     } else if (decompress_first) {
-        if (config->verbose) LOG_INFO("  [1/2] Decompressing...");
-        result = lz77_decompress(current_input, current_output);
+        if (config->verbose) LOG_INFO("  [1/2] Decompressing with %s...",
+                                      get_compression_algorithm_name(config->comp_alg));
+        result = decompress_data(current_input, current_output, config->comp_alg);
         if (result != GSEA_SUCCESS) {
             LOG_ERROR("Decompression failed");
             goto cleanup;
@@ -78,7 +94,18 @@ static int process_file_operations(const char *input_path, const char *output_pa
         current_output = &output;
     } else if (encrypt_first) {
         if (config->verbose) LOG_INFO("  [1/1] Encrypting...");
-        result = aes_encrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        
+        if (config->enc_alg == ENC_AES128) {
+            result = aes_encrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        } else if (config->enc_alg == ENC_CHACHA20) {
+            result = chacha20_encrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        } else if (config->enc_alg == ENC_SALSA20) {
+            result = salsa20_encrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        } else {
+            LOG_ERROR("Unsupported encryption algorithm");
+            result = GSEA_ERROR_ENCRYPTION;
+        }
+        
         if (result != GSEA_SUCCESS) {
             LOG_ERROR("Encryption failed");
             goto cleanup;
@@ -86,7 +113,18 @@ static int process_file_operations(const char *input_path, const char *output_pa
         current_input = &output;
     } else if (decrypt_first) {
         if (config->verbose) LOG_INFO("  [1/1] Decrypting...");
-        result = aes_decrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        
+        if (config->enc_alg == ENC_AES128) {
+            result = aes_decrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        } else if (config->enc_alg == ENC_CHACHA20) {
+            result = chacha20_decrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        } else if (config->enc_alg == ENC_SALSA20) {
+            result = salsa20_decrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        } else {
+            LOG_ERROR("Unsupported encryption algorithm");
+            result = GSEA_ERROR_ENCRYPTION;
+        }
+        
         if (result != GSEA_SUCCESS) {
             LOG_ERROR("Decryption failed");
             goto cleanup;
@@ -100,11 +138,24 @@ static int process_file_operations(const char *input_path, const char *output_pa
         
         if (config->operations & OP_ENCRYPT) {
             if (config->verbose) LOG_INFO("  [2/2] Encrypting...");
-            result = aes_encrypt(current_input, current_output, 
-                               (uint8_t *)config->key, config->key_len);
+            
+            if (config->enc_alg == ENC_AES128) {
+                result = aes_encrypt(current_input, current_output, 
+                                   (uint8_t *)config->key, config->key_len);
+            } else if (config->enc_alg == ENC_CHACHA20) {
+                result = chacha20_encrypt(current_input, current_output, 
+                                        (uint8_t *)config->key, config->key_len);
+            } else if (config->enc_alg == ENC_SALSA20) {
+                result = salsa20_encrypt(current_input, current_output, 
+                                        (uint8_t *)config->key, config->key_len);
+            } else {
+                LOG_ERROR("Unsupported encryption algorithm");
+                result = GSEA_ERROR_ENCRYPTION;
+            }
         } else {
-            if (config->verbose) LOG_INFO("  [2/2] Decompressing...");
-            result = lz77_decompress(current_input, current_output);
+            if (config->verbose) LOG_INFO("  [2/2] Decompressing with %s...",
+                                          get_compression_algorithm_name(config->comp_alg));
+            result = decompress_data(current_input, current_output, config->comp_alg);
         }
         
         if (result != GSEA_SUCCESS) {

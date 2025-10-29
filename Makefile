@@ -15,8 +15,13 @@ BIN_DIR = bin
 # Source files
 SOURCES = $(SRC_DIR)/main.c \
           $(SRC_DIR)/file_manager.c \
+          $(SRC_DIR)/compression/compression.c \
           $(SRC_DIR)/compression/lz77.c \
+          $(SRC_DIR)/compression/huffman.c \
+          $(SRC_DIR)/compression/rle.c \
           $(SRC_DIR)/encryption/aes.c \
+          $(SRC_DIR)/encryption/chacha20.c \
+          $(SRC_DIR)/encryption/salsa20.c \
           $(SRC_DIR)/concurrency/thread_pool.c \
           $(SRC_DIR)/utils/arg_parser.c
 
@@ -61,21 +66,40 @@ test: all
 	@mkdir -p test_data
 	@echo "Hello, World! This is a test file for GSEA compression and encryption." > test_data/test1.txt
 	@echo "Another test file with different content. Testing compression ratios." > test_data/test2.txt
-	@echo "Test compression..."
+	@echo "Test compression with LZ77..."
 	@./$(TARGET) -c --comp-alg lz77 -i test_data/test1.txt -o test_data/test1.lz77 -v
-	@echo "Test decompression..."
+	@echo "Test decompression with LZ77..."
 	@./$(TARGET) -d --comp-alg lz77 -i test_data/test1.lz77 -o test_data/test1_restored.txt -v
+	@echo "Test compression with Huffman..."
+	@./$(TARGET) -c --comp-alg huffman -i test_data/test1.txt -o test_data/test1.huff -v
+	@echo "Test decompression with Huffman..."
+	@./$(TARGET) -d --comp-alg huffman -i test_data/test1.huff -o test_data/test1_huff_restored.txt -v
+	@echo "Test compression with RLE..."
+	@./$(TARGET) -c --comp-alg rle -i test_data/test1.txt -o test_data/test1.rle -v
+	@echo "Test decompression with RLE..."
+	@./$(TARGET) -d --comp-alg rle -i test_data/test1.rle -o test_data/test1_rle_restored.txt -v
 	@echo "Test encryption..."
 	@./$(TARGET) -e --enc-alg aes128 -i test_data/test1.txt -o test_data/test1.enc -k "testkey123" -v
 	@echo "Test decryption..."
 	@./$(TARGET) -u --enc-alg aes128 -i test_data/test1.enc -o test_data/test1_decrypted.txt -k "testkey123" -v
+	@echo "Test encryption with ChaCha20..."
+	@./$(TARGET) -e --enc-alg chacha20 -i test_data/test1.txt -o test_data/test1.chacha.enc -k "testkey123" -v
+	@echo "Test decryption with ChaCha20..."
+	@./$(TARGET) -u --enc-alg chacha20 -i test_data/test1.chacha.enc -o test_data/test1_chacha_decrypted.txt -k "testkey123" -v
 	@echo "Test combined operations..."
 	@./$(TARGET) -ce --comp-alg lz77 --enc-alg aes128 -i test_data/test2.txt -o test_data/test2.comp.enc -k "secret" -v
 	@./$(TARGET) -du --enc-alg aes128 --comp-alg lz77 -i test_data/test2.comp.enc -o test_data/test2_restored.txt -k "secret" -v
+	@echo "Test combined operations with ChaCha20..."
+	@./$(TARGET) -ce --comp-alg huffman --enc-alg chacha20 -i test_data/test2.txt -o test_data/test2.huff.chacha.enc -k "secret" -v
+	@./$(TARGET) -du --enc-alg chacha20 --comp-alg huffman -i test_data/test2.huff.chacha.enc -o test_data/test2_chacha_restored.txt -k "secret" -v
 	@echo "Comparing original and restored files..."
-	@diff test_data/test1.txt test_data/test1_restored.txt && echo "✓ Compression test passed" || echo "✗ Compression test failed"
-	@diff test_data/test1.txt test_data/test1_decrypted.txt && echo "✓ Encryption test passed" || echo "✗ Encryption test failed"
-	@diff test_data/test2.txt test_data/test2_restored.txt && echo "✓ Combined operations test passed" || echo "✗ Combined operations test failed"
+	@diff test_data/test1.txt test_data/test1_restored.txt && echo "✓ LZ77 compression test passed" || echo "✗ LZ77 compression test failed"
+	@diff test_data/test1.txt test_data/test1_huff_restored.txt && echo "✓ Huffman compression test passed" || echo "✗ Huffman compression test failed"
+	@diff test_data/test1.txt test_data/test1_rle_restored.txt && echo "✓ RLE compression test passed" || echo "✗ RLE compression test failed"
+	@diff test_data/test1.txt test_data/test1_decrypted.txt && echo "✓ AES encryption test passed" || echo "✗ AES encryption test failed"
+	@diff test_data/test1.txt test_data/test1_chacha_decrypted.txt && echo "✓ ChaCha20 encryption test passed" || echo "✗ ChaCha20 encryption test failed"
+	@diff test_data/test2.txt test_data/test2_restored.txt && echo "✓ Combined operations (LZ77+AES) test passed" || echo "✗ Combined operations test failed"
+	@diff test_data/test2.txt test_data/test2_chacha_restored.txt && echo "✓ Combined operations (Huffman+ChaCha20) test passed" || echo "✗ Combined operations test failed"
 
 # Clean build artifacts
 clean:
@@ -114,18 +138,67 @@ docs:
 		echo "Doxygen not found. Please install doxygen to generate documentation."; \
 	fi
 
+# Package for submission
+package: clean
+	@echo "Creating submission package..."
+	@mkdir -p submission
+	@tar -czf submission/GSEA_$(shell date +%Y%m%d_%H%M%S).tar.gz \
+		--exclude='*.o' \
+		--exclude='bin/*' \
+		--exclude='build/*' \
+		--exclude='test_data/*' \
+		--exclude='submission/*' \
+		--exclude='.git' \
+		--exclude='.gitignore' \
+		src/ Makefile README.md INFORME_VERIFICACION.md scripts/
+	@echo "Package created: submission/GSEA_$(shell date +%Y%m%d_%H%M%S).tar.gz"
+	@ls -lh submission/
+
+# Verify submission readiness
+verify-submission:
+	@echo "Running pre-submission verification..."
+	@./scripts/verify_submission.sh
+
+# Benchmark tests
+benchmark-quick: all
+	@echo "Running quick benchmarks..."
+	@python3 tests/benchmark_tests.py --binary ./bin/gsea --quick
+
+benchmark-full: all
+	@echo "Running full benchmark suite..."
+	@python3 tests/benchmark_tests.py --binary ./bin/gsea --full
+
+benchmark-valgrind: debug
+	@echo "Running benchmarks with valgrind (slow!)..."
+	@python3 tests/benchmark_tests.py --binary ./bin/gsea --quick --valgrind
+
+# Install Python dependencies for benchmarks
+install-deps:
+	@echo "Installing Python dependencies for benchmarks..."
+	@pip3 install --user psutil matplotlib tqdm numpy || \
+		echo "Warning: Failed to install some dependencies"
+
 # Show help
 help:
 	@echo "GSEA Makefile targets:"
-	@echo "  all       - Build the project (default)"
-	@echo "  debug     - Build with debug symbols and sanitizers"
-	@echo "  test      - Run automated tests"
-	@echo "  clean     - Remove build artifacts"
-	@echo "  install   - Install to /usr/local/bin (requires sudo)"
-	@echo "  uninstall - Remove from /usr/local/bin (requires sudo)"
-	@echo "  valgrind  - Check for memory leaks"
-	@echo "  docs      - Generate documentation (requires doxygen)"
-	@echo "  help      - Show this help message"
+	@echo "  all               - Build the project (default)"
+	@echo "  debug             - Build with debug symbols and sanitizers"
+	@echo "  test              - Run automated tests"
+	@echo "  clean             - Remove build artifacts"
+	@echo "  install           - Install to /usr/local/bin (requires sudo)"
+	@echo "  uninstall         - Remove from /usr/local/bin (requires sudo)"
+	@echo "  valgrind          - Check for memory leaks"
+	@echo "  docs              - Generate documentation (requires doxygen)"
+	@echo "  package           - Create submission tarball"
+	@echo "  verify-submission - Run pre-submission checks"
+	@echo "  benchmark-quick   - Run quick performance benchmarks"
+	@echo "  benchmark-full    - Run comprehensive benchmarks"
+	@echo "  benchmark-valgrind- Run benchmarks with memory leak detection"
+	@echo "  install-deps      - Install Python dependencies for benchmarks"
+	@echo "  help              - Show this help message"
 
 # Phony targets
-.PHONY: all directories debug test clean install uninstall valgrind docs help
+.PHONY: all directories debug test clean install uninstall valgrind docs package verify-submission benchmark-quick benchmark-full benchmark-valgrind install-deps help
+
+# Phony targets
+.PHONY: all directories debug test clean install uninstall valgrind docs package verify-submission help

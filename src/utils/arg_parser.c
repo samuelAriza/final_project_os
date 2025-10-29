@@ -21,7 +21,7 @@ static void print_usage(const char *program_name) {
     printf("  -e                    Encrypt data\n");
     printf("  -u                    Decrypt data\n");
     printf("  --comp-alg ALG        Compression algorithm (lz77, huffman, rle)\n");
-    printf("  --enc-alg ALG         Encryption algorithm (aes128, des, vigenere)\n");
+    printf("  --enc-alg ALG         Encryption algorithm (aes128, chacha20, des, vigenere)\n");
     printf("  -i PATH               Input file or directory\n");
     printf("  -o PATH               Output file or directory\n");
     printf("  -k KEY                Encryption/Decryption key\n");
@@ -46,12 +46,10 @@ static int parse_compression_algorithm(const char *alg_name,
         return GSEA_SUCCESS;
     } else if (strcmp(alg_name, "huffman") == 0) {
         *alg = COMP_HUFFMAN;
-        LOG_ERROR("Huffman algorithm not yet implemented");
-        return GSEA_ERROR_ARGS;
+        return GSEA_SUCCESS;
     } else if (strcmp(alg_name, "rle") == 0) {
         *alg = COMP_RLE;
-        LOG_ERROR("RLE algorithm not yet implemented");
-        return GSEA_ERROR_ARGS;
+        return GSEA_SUCCESS;
     } else {
         LOG_ERROR("Unknown compression algorithm: %s", alg_name);
         return GSEA_ERROR_ARGS;
@@ -65,6 +63,12 @@ static int parse_encryption_algorithm(const char *alg_name,
                                       encryption_algorithm_t *alg) {
     if (strcmp(alg_name, "aes128") == 0 || strcmp(alg_name, "aes") == 0) {
         *alg = ENC_AES128;
+        return GSEA_SUCCESS;
+    } else if (strcmp(alg_name, "chacha20") == 0 || strcmp(alg_name, "chacha") == 0) {
+        *alg = ENC_CHACHA20;
+        return GSEA_SUCCESS;
+    } else if (strcmp(alg_name, "salsa20") == 0 || strcmp(alg_name, "salsa") == 0) {
+        *alg = ENC_SALSA20;
         return GSEA_SUCCESS;
     } else if (strcmp(alg_name, "des") == 0) {
         *alg = ENC_DES;
