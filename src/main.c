@@ -8,6 +8,7 @@
 #include "file_manager.h"
 #include "compression/compression.h"
 #include "encryption/aes.h"
+#include "encryption/chacha20.h"
 #include "concurrency/thread_pool.h"
 #include "utils/arg_parser.h"
 #include <stdio.h>
@@ -92,7 +93,16 @@ static int process_file_operations(const char *input_path, const char *output_pa
         current_output = &output;
     } else if (encrypt_first) {
         if (config->verbose) LOG_INFO("  [1/1] Encrypting...");
-        result = aes_encrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        
+        if (config->enc_alg == ENC_AES128) {
+            result = aes_encrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        } else if (config->enc_alg == ENC_CHACHA20) {
+            result = chacha20_encrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        } else {
+            LOG_ERROR("Unsupported encryption algorithm");
+            result = GSEA_ERROR_ENCRYPTION;
+        }
+        
         if (result != GSEA_SUCCESS) {
             LOG_ERROR("Encryption failed");
             goto cleanup;
@@ -100,7 +110,16 @@ static int process_file_operations(const char *input_path, const char *output_pa
         current_input = &output;
     } else if (decrypt_first) {
         if (config->verbose) LOG_INFO("  [1/1] Decrypting...");
-        result = aes_decrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        
+        if (config->enc_alg == ENC_AES128) {
+            result = aes_decrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        } else if (config->enc_alg == ENC_CHACHA20) {
+            result = chacha20_decrypt(current_input, &output, (uint8_t *)config->key, config->key_len);
+        } else {
+            LOG_ERROR("Unsupported encryption algorithm");
+            result = GSEA_ERROR_ENCRYPTION;
+        }
+        
         if (result != GSEA_SUCCESS) {
             LOG_ERROR("Decryption failed");
             goto cleanup;
@@ -114,8 +133,17 @@ static int process_file_operations(const char *input_path, const char *output_pa
         
         if (config->operations & OP_ENCRYPT) {
             if (config->verbose) LOG_INFO("  [2/2] Encrypting...");
-            result = aes_encrypt(current_input, current_output, 
-                               (uint8_t *)config->key, config->key_len);
+            
+            if (config->enc_alg == ENC_AES128) {
+                result = aes_encrypt(current_input, current_output, 
+                                   (uint8_t *)config->key, config->key_len);
+            } else if (config->enc_alg == ENC_CHACHA20) {
+                result = chacha20_encrypt(current_input, current_output, 
+                                        (uint8_t *)config->key, config->key_len);
+            } else {
+                LOG_ERROR("Unsupported encryption algorithm");
+                result = GSEA_ERROR_ENCRYPTION;
+            }
         } else {
             if (config->verbose) LOG_INFO("  [2/2] Decompressing with %s...",
                                           get_compression_algorithm_name(config->comp_alg));

@@ -20,6 +20,7 @@ SOURCES = $(SRC_DIR)/main.c \
           $(SRC_DIR)/compression/huffman.c \
           $(SRC_DIR)/compression/rle.c \
           $(SRC_DIR)/encryption/aes.c \
+          $(SRC_DIR)/encryption/chacha20.c \
           $(SRC_DIR)/concurrency/thread_pool.c \
           $(SRC_DIR)/utils/arg_parser.c
 
@@ -80,15 +81,24 @@ test: all
 	@./$(TARGET) -e --enc-alg aes128 -i test_data/test1.txt -o test_data/test1.enc -k "testkey123" -v
 	@echo "Test decryption..."
 	@./$(TARGET) -u --enc-alg aes128 -i test_data/test1.enc -o test_data/test1_decrypted.txt -k "testkey123" -v
+	@echo "Test encryption with ChaCha20..."
+	@./$(TARGET) -e --enc-alg chacha20 -i test_data/test1.txt -o test_data/test1.chacha.enc -k "testkey123" -v
+	@echo "Test decryption with ChaCha20..."
+	@./$(TARGET) -u --enc-alg chacha20 -i test_data/test1.chacha.enc -o test_data/test1_chacha_decrypted.txt -k "testkey123" -v
 	@echo "Test combined operations..."
 	@./$(TARGET) -ce --comp-alg lz77 --enc-alg aes128 -i test_data/test2.txt -o test_data/test2.comp.enc -k "secret" -v
 	@./$(TARGET) -du --enc-alg aes128 --comp-alg lz77 -i test_data/test2.comp.enc -o test_data/test2_restored.txt -k "secret" -v
+	@echo "Test combined operations with ChaCha20..."
+	@./$(TARGET) -ce --comp-alg huffman --enc-alg chacha20 -i test_data/test2.txt -o test_data/test2.huff.chacha.enc -k "secret" -v
+	@./$(TARGET) -du --enc-alg chacha20 --comp-alg huffman -i test_data/test2.huff.chacha.enc -o test_data/test2_chacha_restored.txt -k "secret" -v
 	@echo "Comparing original and restored files..."
 	@diff test_data/test1.txt test_data/test1_restored.txt && echo "✓ LZ77 compression test passed" || echo "✗ LZ77 compression test failed"
 	@diff test_data/test1.txt test_data/test1_huff_restored.txt && echo "✓ Huffman compression test passed" || echo "✗ Huffman compression test failed"
 	@diff test_data/test1.txt test_data/test1_rle_restored.txt && echo "✓ RLE compression test passed" || echo "✗ RLE compression test failed"
-	@diff test_data/test1.txt test_data/test1_decrypted.txt && echo "✓ Encryption test passed" || echo "✗ Encryption test failed"
-	@diff test_data/test2.txt test_data/test2_restored.txt && echo "✓ Combined operations test passed" || echo "✗ Combined operations test failed"
+	@diff test_data/test1.txt test_data/test1_decrypted.txt && echo "✓ AES encryption test passed" || echo "✗ AES encryption test failed"
+	@diff test_data/test1.txt test_data/test1_chacha_decrypted.txt && echo "✓ ChaCha20 encryption test passed" || echo "✗ ChaCha20 encryption test failed"
+	@diff test_data/test2.txt test_data/test2_restored.txt && echo "✓ Combined operations (LZ77+AES) test passed" || echo "✗ Combined operations test failed"
+	@diff test_data/test2.txt test_data/test2_chacha_restored.txt && echo "✓ Combined operations (Huffman+ChaCha20) test passed" || echo "✗ Combined operations test failed"
 
 # Clean build artifacts
 clean:
