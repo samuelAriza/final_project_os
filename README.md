@@ -11,41 +11,50 @@ GSEA es una utilidad de línea de comandos de alto rendimiento diseñada para co
 
 - **Compresión LZ77**: Algoritmo de compresión sin pérdida basado en ventanas deslizantes
 - **Compresión Huffman**: Algoritmo de codificación por frecuencias para máxima compresión
-- **Encriptación AES-128**: Implementación completa del estándar Advanced Encryption Standard
+- **Encriptación Triple**: AES-128, ChaCha20 y Salsa20 - Tres algoritmos criptográficos implementados desde cero
 - **Procesamiento Concurrente**: Pool de hilos para procesamiento paralelo de múltiples archivos
 - **Llamadas Directas al Sistema**: Usa syscalls POSIX (`open`, `read`, `write`, `close`) para máxima eficiencia
 - **Operaciones Combinadas**: Soporte para comprimir y encriptar en una sola operación
 - **Sin Dependencias Externas**: Todos los algoritmos implementados desde cero
+- **Suite de Benchmarks**: Sistema profesional de pruebas de rendimiento y análisis de recursos
 
 ## Arquitectura del Proyecto
 
 ```
-├── Makefile
-├── README.md
-├── src
-│   ├── common.h
-│   ├── compression
-│   │   ├── lz77.c
-│   │   └── lz77.h
-│   ├── concurrency
-│   │   ├── thread_pool.c
-│   │   └── thread_pool.h
-│   ├── encryption
-│   │   ├── aes.c
-│   │   └── aes.h
-│   ├── file_manager.c
-│   ├── file_manager.h
-│   ├── main.c
-│   └── utils
-│       ├── arg_parser.c
-│       ├── arg_parser.h
-│       ├── error_handler.c
-│       └── error_handler.h
-└── tests
-    ├── test_compression.c
-    ├── test_encryption.c
-    └── test_integration.c
+├── Makefile                          # Build automation y targets de pruebas
+├── README.md                         # Este archivo
+├── INFORME_VERIFICACION.md          # Verificación exhaustiva del proyecto
+├── RESUMEN_EJECUTIVO.md             # Checklist de entrega
+├── .gitignore                       # Archivos excluidos de Git
+├── scripts/
+│   ├── verify_submission.sh         # Script de verificación pre-entrega
+│   └── benchmark.sh                 # Script de benchmarks automatizado
+├── src/
+│   ├── main.c                       # Punto de entrada principal
+│   ├── common.h                     # Definiciones y estructuras compartidas
+│   ├── file_manager.{c,h}           # Gestión de archivos y directorios
+│   ├── compression/
+│   │   ├── lz77.{c,h}              # Algoritmo LZ77
+│   │   ├── huffman.{c,h}           # Algoritmo Huffman
+│   │   └── rle.{c,h}               # Run-Length Encoding (prototipo)
+│   ├── encryption/
+│   │   ├── aes.{c,h}               # AES-128 ECB
+│   │   ├── chacha20.{c,h}          # ChaCha20
+│   │   └── salsa20.{c,h}           # Salsa20
+│   ├── concurrency/
+│   │   ├── thread_pool.{c,h}       # Pool de hilos POSIX
+│   └── utils/
+│       ├── arg_parser.{c,h}        # Parsing de argumentos CLI
+│       └── error_handler.{c,h}     # Manejo de errores
+└── tests/
+    ├── test_compression.c           # Tests de compresión
+    ├── test_encryption.c            # Tests de encriptación
+    ├── test_integration.c           # Tests de integración
+    ├── benchmark_tests.py           # Suite de benchmarks profesional
+    ├── README_BENCHMARKS.md         # Documentación de benchmarks
+    └── BENCHMARK_SUMMARY.md         # Resumen ejecutivo de benchmarks
 ```
+
 
 ## Compilación e Instalación
 
@@ -194,6 +203,39 @@ Esta suite realiza:
 # Verificar fugas de memoria con Valgrind
 make valgrind
 ```
+
+### Benchmarks de Rendimiento
+
+El proyecto incluye una suite completa de benchmarks profesionales:
+
+```bash
+# Instalar dependencias Python (solo la primera vez)
+make install-deps
+
+# Benchmark rápido (~2 minutos)
+make benchmark-quick
+
+# Benchmark completo (~10-15 minutos)
+make benchmark-full
+
+# Con detección de fugas de memoria (muy lento)
+make benchmark-valgrind
+```
+
+**Características del sistema de benchmarks:**
+- ✅ Prueba todas las combinaciones de algoritmos (3×3 = 9)
+- ✅ Detección de fugas de memoria con Valgrind
+- ✅ Monitoreo de CPU, memoria y procesos zombie
+- ✅ Generación de gráficas profesionales (PNG + PDF)
+- ✅ Exportación de resultados en CSV
+- ✅ Cálculo de throughput y ratios de compresión
+
+**Resultados generados:**
+- `benchmark_results/csv/` - Datos detallados en CSV
+- `benchmark_results/plots/` - Gráficas de rendimiento
+- `benchmark_results/logs/` - Logs de valgrind
+
+Ver `tests/README_BENCHMARKS.md` para documentación completa.
 
 ## 🔬 Detalles Técnicos
 

@@ -159,6 +159,25 @@ verify-submission:
 	@echo "Running pre-submission verification..."
 	@./scripts/verify_submission.sh
 
+# Benchmark tests
+benchmark-quick: all
+	@echo "Running quick benchmarks..."
+	@python3 tests/benchmark_tests.py --binary ./bin/gsea --quick
+
+benchmark-full: all
+	@echo "Running full benchmark suite..."
+	@python3 tests/benchmark_tests.py --binary ./bin/gsea --full
+
+benchmark-valgrind: debug
+	@echo "Running benchmarks with valgrind (slow!)..."
+	@python3 tests/benchmark_tests.py --binary ./bin/gsea --quick --valgrind
+
+# Install Python dependencies for benchmarks
+install-deps:
+	@echo "Installing Python dependencies for benchmarks..."
+	@pip3 install --user psutil matplotlib tqdm numpy || \
+		echo "Warning: Failed to install some dependencies"
+
 # Show help
 help:
 	@echo "GSEA Makefile targets:"
@@ -172,7 +191,14 @@ help:
 	@echo "  docs              - Generate documentation (requires doxygen)"
 	@echo "  package           - Create submission tarball"
 	@echo "  verify-submission - Run pre-submission checks"
+	@echo "  benchmark-quick   - Run quick performance benchmarks"
+	@echo "  benchmark-full    - Run comprehensive benchmarks"
+	@echo "  benchmark-valgrind- Run benchmarks with memory leak detection"
+	@echo "  install-deps      - Install Python dependencies for benchmarks"
 	@echo "  help              - Show this help message"
+
+# Phony targets
+.PHONY: all directories debug test clean install uninstall valgrind docs package verify-submission benchmark-quick benchmark-full benchmark-valgrind install-deps help
 
 # Phony targets
 .PHONY: all directories debug test clean install uninstall valgrind docs package verify-submission help
