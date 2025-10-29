@@ -1,0 +1,25 @@
+# Build artifacts
+build/
+bin/
+*.o
+*.a
+*.so
+
+# Test data
+test_data/
+benchmark_results/
+submission/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

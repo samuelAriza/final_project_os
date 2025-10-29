@@ -138,18 +138,41 @@ docs:
 		echo "Doxygen not found. Please install doxygen to generate documentation."; \
 	fi
 
+# Package for submission
+package: clean
+	@echo "Creating submission package..."
+	@mkdir -p submission
+	@tar -czf submission/GSEA_$(shell date +%Y%m%d_%H%M%S).tar.gz \
+		--exclude='*.o' \
+		--exclude='bin/*' \
+		--exclude='build/*' \
+		--exclude='test_data/*' \
+		--exclude='submission/*' \
+		--exclude='.git' \
+		--exclude='.gitignore' \
+		src/ Makefile README.md INFORME_VERIFICACION.md scripts/
+	@echo "Package created: submission/GSEA_$(shell date +%Y%m%d_%H%M%S).tar.gz"
+	@ls -lh submission/
+
+# Verify submission readiness
+verify-submission:
+	@echo "Running pre-submission verification..."
+	@./scripts/verify_submission.sh
+
 # Show help
 help:
 	@echo "GSEA Makefile targets:"
-	@echo "  all       - Build the project (default)"
-	@echo "  debug     - Build with debug symbols and sanitizers"
-	@echo "  test      - Run automated tests"
-	@echo "  clean     - Remove build artifacts"
-	@echo "  install   - Install to /usr/local/bin (requires sudo)"
-	@echo "  uninstall - Remove from /usr/local/bin (requires sudo)"
-	@echo "  valgrind  - Check for memory leaks"
-	@echo "  docs      - Generate documentation (requires doxygen)"
-	@echo "  help      - Show this help message"
+	@echo "  all               - Build the project (default)"
+	@echo "  debug             - Build with debug symbols and sanitizers"
+	@echo "  test              - Run automated tests"
+	@echo "  clean             - Remove build artifacts"
+	@echo "  install           - Install to /usr/local/bin (requires sudo)"
+	@echo "  uninstall         - Remove from /usr/local/bin (requires sudo)"
+	@echo "  valgrind          - Check for memory leaks"
+	@echo "  docs              - Generate documentation (requires doxygen)"
+	@echo "  package           - Create submission tarball"
+	@echo "  verify-submission - Run pre-submission checks"
+	@echo "  help              - Show this help message"
 
 # Phony targets
-.PHONY: all directories debug test clean install uninstall valgrind docs help
+.PHONY: all directories debug test clean install uninstall valgrind docs package verify-submission help
