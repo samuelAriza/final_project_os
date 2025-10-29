@@ -49,8 +49,7 @@ static int parse_compression_algorithm(const char *alg_name,
         return GSEA_SUCCESS;
     } else if (strcmp(alg_name, "rle") == 0) {
         *alg = COMP_RLE;
-        LOG_ERROR("RLE algorithm not yet implemented");
-        return GSEA_ERROR_ARGS;
+        return GSEA_SUCCESS;
     } else {
         LOG_ERROR("Unknown compression algorithm: %s", alg_name);
         return GSEA_ERROR_ARGS;

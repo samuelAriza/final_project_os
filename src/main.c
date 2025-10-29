@@ -26,6 +26,18 @@ typedef struct {
 } process_args_t;
 
 /**
+ * @brief Obtiene el nombre legible del algoritmo de compresión
+ */
+static const char* get_compression_algorithm_name(compression_algorithm_t alg) {
+    switch (alg) {
+        case COMP_LZ77: return "LZ77";
+        case COMP_HUFFMAN: return "Huffman";
+        case COMP_RLE: return "RLE";
+        default: return "Unknown";
+    }
+}
+
+/**
  * @brief Procesa un archivo individual: compresión/descompresión y/o encriptación/desencriptación
  */
 static int process_file_operations(const char *input_path, const char *output_path,
@@ -60,8 +72,7 @@ static int process_file_operations(const char *input_path, const char *output_pa
     /* Primera operación */
     if (compress_first) {
         if (config->verbose) LOG_INFO("  [1/2] Compressing with %s...",
-                                      config->comp_alg == COMP_LZ77 ? "LZ77" : 
-                                      config->comp_alg == COMP_HUFFMAN ? "Huffman" : "Unknown");
+                                      get_compression_algorithm_name(config->comp_alg));
         result = compress_data(current_input, current_output, config->comp_alg);
         if (result != GSEA_SUCCESS) {
             LOG_ERROR("Compression failed");
@@ -71,8 +82,7 @@ static int process_file_operations(const char *input_path, const char *output_pa
         current_output = &output;
     } else if (decompress_first) {
         if (config->verbose) LOG_INFO("  [1/2] Decompressing with %s...",
-                                      config->comp_alg == COMP_LZ77 ? "LZ77" : 
-                                      config->comp_alg == COMP_HUFFMAN ? "Huffman" : "Unknown");
+                                      get_compression_algorithm_name(config->comp_alg));
         result = decompress_data(current_input, current_output, config->comp_alg);
         if (result != GSEA_SUCCESS) {
             LOG_ERROR("Decompression failed");
@@ -108,8 +118,7 @@ static int process_file_operations(const char *input_path, const char *output_pa
                                (uint8_t *)config->key, config->key_len);
         } else {
             if (config->verbose) LOG_INFO("  [2/2] Decompressing with %s...",
-                                          config->comp_alg == COMP_LZ77 ? "LZ77" : 
-                                          config->comp_alg == COMP_HUFFMAN ? "Huffman" : "Unknown");
+                                          get_compression_algorithm_name(config->comp_alg));
             result = decompress_data(current_input, current_output, config->comp_alg);
         }
         

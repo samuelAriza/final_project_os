@@ -6,6 +6,7 @@
 #include "compression.h"
 #include "lz77.h"
 #include "huffman.h"
+#include "rle.h"
 #include "../common.h"
 #include <stdlib.h>
 #include <string.h>
@@ -54,9 +55,35 @@ int compress_data(const file_buffer_t *input, file_buffer_t *output,
             return GSEA_SUCCESS;
         }
             
-        case COMP_RLE:
-            LOG_ERROR("RLE algorithm not yet implemented");
-            return GSEA_ERROR_COMPRESSION;
+        case COMP_RLE: {
+            /* RLE usa una estructura intermedia similar a Huffman */
+            rle_compressed_t *compressed = NULL;
+            int result = rle_compress(input->data, input->size, &compressed);
+            
+            if (result != RLE_SUCCESS) {
+                LOG_ERROR("RLE compression failed: %d", result);
+                return GSEA_ERROR_COMPRESSION;
+            }
+            
+            /* Serializar a file_buffer_t */
+            uint8_t *serialized = NULL;
+            size_t serialized_size = 0;
+            result = rle_serialize(compressed, &serialized, &serialized_size);
+            
+            if (result != RLE_SUCCESS) {
+                rle_free_compressed(compressed);
+                LOG_ERROR("RLE serialization failed: %d", result);
+                return GSEA_ERROR_COMPRESSION;
+            }
+            
+            /* Copiar al buffer de salida */
+            output->data = serialized;
+            output->size = serialized_size;
+            output->capacity = serialized_size;
+            
+            rle_free_compressed(compressed);
+            return GSEA_SUCCESS;
+        }
             
         default:
             LOG_ERROR("Unknown compression algorithm: %d", algorithm);
@@ -108,9 +135,35 @@ int decompress_data(const file_buffer_t *input, file_buffer_t *output,
             return GSEA_SUCCESS;
         }
             
-        case COMP_RLE:
-            LOG_ERROR("RLE algorithm not yet implemented");
-            return GSEA_ERROR_COMPRESSION;
+        case COMP_RLE: {
+            /* Deserializar desde file_buffer_t */
+            rle_compressed_t *compressed = NULL;
+            int result = rle_deserialize(input->data, input->size, &compressed);
+            
+            if (result != RLE_SUCCESS) {
+                LOG_ERROR("RLE deserialization failed: %d", result);
+                return GSEA_ERROR_COMPRESSION;
+            }
+            
+            /* Descomprimir */
+            uint8_t *decompressed = NULL;
+            size_t decompressed_size = 0;
+            result = rle_decompress(compressed, &decompressed, &decompressed_size);
+            
+            if (result != RLE_SUCCESS) {
+                rle_free_compressed(compressed);
+                LOG_ERROR("RLE decompression failed: %d", result);
+                return GSEA_ERROR_COMPRESSION;
+            }
+            
+            /* Copiar al buffer de salida */
+            output->data = decompressed;
+            output->size = decompressed_size;
+            output->capacity = decompressed_size;
+            
+            rle_free_compressed(compressed);
+            return GSEA_SUCCESS;
+        }
             
         default:
             LOG_ERROR("Unknown compression algorithm: %d", algorithm);

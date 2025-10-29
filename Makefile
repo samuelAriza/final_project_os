@@ -18,6 +18,7 @@ SOURCES = $(SRC_DIR)/main.c \
           $(SRC_DIR)/compression/compression.c \
           $(SRC_DIR)/compression/lz77.c \
           $(SRC_DIR)/compression/huffman.c \
+          $(SRC_DIR)/compression/rle.c \
           $(SRC_DIR)/encryption/aes.c \
           $(SRC_DIR)/concurrency/thread_pool.c \
           $(SRC_DIR)/utils/arg_parser.c
@@ -71,6 +72,10 @@ test: all
 	@./$(TARGET) -c --comp-alg huffman -i test_data/test1.txt -o test_data/test1.huff -v
 	@echo "Test decompression with Huffman..."
 	@./$(TARGET) -d --comp-alg huffman -i test_data/test1.huff -o test_data/test1_huff_restored.txt -v
+	@echo "Test compression with RLE..."
+	@./$(TARGET) -c --comp-alg rle -i test_data/test1.txt -o test_data/test1.rle -v
+	@echo "Test decompression with RLE..."
+	@./$(TARGET) -d --comp-alg rle -i test_data/test1.rle -o test_data/test1_rle_restored.txt -v
 	@echo "Test encryption..."
 	@./$(TARGET) -e --enc-alg aes128 -i test_data/test1.txt -o test_data/test1.enc -k "testkey123" -v
 	@echo "Test decryption..."
@@ -81,6 +86,7 @@ test: all
 	@echo "Comparing original and restored files..."
 	@diff test_data/test1.txt test_data/test1_restored.txt && echo "✓ LZ77 compression test passed" || echo "✗ LZ77 compression test failed"
 	@diff test_data/test1.txt test_data/test1_huff_restored.txt && echo "✓ Huffman compression test passed" || echo "✗ Huffman compression test failed"
+	@diff test_data/test1.txt test_data/test1_rle_restored.txt && echo "✓ RLE compression test passed" || echo "✗ RLE compression test failed"
 	@diff test_data/test1.txt test_data/test1_decrypted.txt && echo "✓ Encryption test passed" || echo "✗ Encryption test failed"
 	@diff test_data/test2.txt test_data/test2_restored.txt && echo "✓ Combined operations test passed" || echo "✗ Combined operations test failed"
 
