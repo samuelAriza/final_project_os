@@ -6,7 +6,7 @@
 
 #include "common.h"
 #include "file_manager.h"
-#include "compression/lz77.h"
+#include "compression/compression.h"
 #include "encryption/aes.h"
 #include "concurrency/thread_pool.h"
 #include "utils/arg_parser.h"
@@ -59,8 +59,10 @@ static int process_file_operations(const char *input_path, const char *output_pa
     
     /* Primera operación */
     if (compress_first) {
-        if (config->verbose) LOG_INFO("  [1/2] Compressing...");
-        result = lz77_compress(current_input, current_output);
+        if (config->verbose) LOG_INFO("  [1/2] Compressing with %s...",
+                                      config->comp_alg == COMP_LZ77 ? "LZ77" : 
+                                      config->comp_alg == COMP_HUFFMAN ? "Huffman" : "Unknown");
+        result = compress_data(current_input, current_output, config->comp_alg);
         if (result != GSEA_SUCCESS) {
             LOG_ERROR("Compression failed");
             goto cleanup;
@@ -68,8 +70,10 @@ static int process_file_operations(const char *input_path, const char *output_pa
         current_input = &intermediate;
         current_output = &output;
     } else if (decompress_first) {
-        if (config->verbose) LOG_INFO("  [1/2] Decompressing...");
-        result = lz77_decompress(current_input, current_output);
+        if (config->verbose) LOG_INFO("  [1/2] Decompressing with %s...",
+                                      config->comp_alg == COMP_LZ77 ? "LZ77" : 
+                                      config->comp_alg == COMP_HUFFMAN ? "Huffman" : "Unknown");
+        result = decompress_data(current_input, current_output, config->comp_alg);
         if (result != GSEA_SUCCESS) {
             LOG_ERROR("Decompression failed");
             goto cleanup;
@@ -103,8 +107,10 @@ static int process_file_operations(const char *input_path, const char *output_pa
             result = aes_encrypt(current_input, current_output, 
                                (uint8_t *)config->key, config->key_len);
         } else {
-            if (config->verbose) LOG_INFO("  [2/2] Decompressing...");
-            result = lz77_decompress(current_input, current_output);
+            if (config->verbose) LOG_INFO("  [2/2] Decompressing with %s...",
+                                          config->comp_alg == COMP_LZ77 ? "LZ77" : 
+                                          config->comp_alg == COMP_HUFFMAN ? "Huffman" : "Unknown");
+            result = decompress_data(current_input, current_output, config->comp_alg);
         }
         
         if (result != GSEA_SUCCESS) {

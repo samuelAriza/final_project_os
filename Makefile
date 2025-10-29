@@ -15,7 +15,9 @@ BIN_DIR = bin
 # Source files
 SOURCES = $(SRC_DIR)/main.c \
           $(SRC_DIR)/file_manager.c \
+          $(SRC_DIR)/compression/compression.c \
           $(SRC_DIR)/compression/lz77.c \
+          $(SRC_DIR)/compression/huffman.c \
           $(SRC_DIR)/encryption/aes.c \
           $(SRC_DIR)/concurrency/thread_pool.c \
           $(SRC_DIR)/utils/arg_parser.c
@@ -61,10 +63,14 @@ test: all
 	@mkdir -p test_data
 	@echo "Hello, World! This is a test file for GSEA compression and encryption." > test_data/test1.txt
 	@echo "Another test file with different content. Testing compression ratios." > test_data/test2.txt
-	@echo "Test compression..."
+	@echo "Test compression with LZ77..."
 	@./$(TARGET) -c --comp-alg lz77 -i test_data/test1.txt -o test_data/test1.lz77 -v
-	@echo "Test decompression..."
+	@echo "Test decompression with LZ77..."
 	@./$(TARGET) -d --comp-alg lz77 -i test_data/test1.lz77 -o test_data/test1_restored.txt -v
+	@echo "Test compression with Huffman..."
+	@./$(TARGET) -c --comp-alg huffman -i test_data/test1.txt -o test_data/test1.huff -v
+	@echo "Test decompression with Huffman..."
+	@./$(TARGET) -d --comp-alg huffman -i test_data/test1.huff -o test_data/test1_huff_restored.txt -v
 	@echo "Test encryption..."
 	@./$(TARGET) -e --enc-alg aes128 -i test_data/test1.txt -o test_data/test1.enc -k "testkey123" -v
 	@echo "Test decryption..."
@@ -73,7 +79,8 @@ test: all
 	@./$(TARGET) -ce --comp-alg lz77 --enc-alg aes128 -i test_data/test2.txt -o test_data/test2.comp.enc -k "secret" -v
 	@./$(TARGET) -du --enc-alg aes128 --comp-alg lz77 -i test_data/test2.comp.enc -o test_data/test2_restored.txt -k "secret" -v
 	@echo "Comparing original and restored files..."
-	@diff test_data/test1.txt test_data/test1_restored.txt && echo "✓ Compression test passed" || echo "✗ Compression test failed"
+	@diff test_data/test1.txt test_data/test1_restored.txt && echo "✓ LZ77 compression test passed" || echo "✗ LZ77 compression test failed"
+	@diff test_data/test1.txt test_data/test1_huff_restored.txt && echo "✓ Huffman compression test passed" || echo "✗ Huffman compression test failed"
 	@diff test_data/test1.txt test_data/test1_decrypted.txt && echo "✓ Encryption test passed" || echo "✗ Encryption test failed"
 	@diff test_data/test2.txt test_data/test2_restored.txt && echo "✓ Combined operations test passed" || echo "✗ Combined operations test failed"
 
