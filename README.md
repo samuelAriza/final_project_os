@@ -304,16 +304,6 @@ echo "Archivado completado: ${SALIDA}"
 - **Documentación:** Comentarios Doxygen en headers
 - **Testing:** Verificación de integridad en cada operación
 
-### Roadmap Futuro
-
-- [ ] Implementación de Huffman Coding
-- [ ] Implementación de RLE (Run-Length Encoding)
-- [ ] Modo CBC para AES con IV aleatorio
-- [ ] Soporte para DES y Triple-DES
-- [ ] Compresión adaptativa (selección automática de algoritmo)
-- [ ] Interfaz gráfica (GTK)
-- [ ] Soporte para Windows API
-
 ## Referencias
 
 1. Ziv, J., & Lempel, A. (1977). "A universal algorithm for sequential data compression"
