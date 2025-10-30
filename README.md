@@ -173,7 +173,7 @@ Esta suite realiza:
 make valgrind
 ```
 
-## 🔬 Detalles Técnicos
+## Detalles Técnicos
 
 ### Algoritmo LZ77
 
