@@ -548,7 +548,7 @@ echo "Archivado completado: ${SALIDA}"
 
 ## Autores
 
-**Universidad EAFIT** - Escuela de Ciencias Aplicadas e Ingeniería universidad EAFIT
+**Universidad EAFIT** - Escuela de Ciencias Aplicadas e Ingeniería Universidad EAFIT
 **Curso:** Sistemas Operativos
 
 **Equipo de Desarrollo:**
