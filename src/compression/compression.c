@@ -10,6 +10,7 @@
 #include "../common.h"
 #include <stdlib.h>
 #include <string.h>
+#include "lzw.h"
 
 /**
  * @brief Comprime datos usando el algoritmo especificado
@@ -82,6 +83,35 @@ int compress_data(const file_buffer_t *input, file_buffer_t *output,
             output->capacity = serialized_size;
             
             rle_free_compressed(compressed);
+            return GSEA_SUCCESS;
+        }
+        case COMP_LZW: {
+            /* LZW usa estructura intermedia similar a Huffman */
+            lzw_compressed_t *compressed = NULL;
+            int result = lzw_compress(input->data, input->size, &compressed);
+            
+            if (result != LZW_SUCCESS) {
+                LOG_ERROR("LZW compression failed: %d", result);
+                return GSEA_ERROR_COMPRESSION;
+            }
+            
+            /* Serializar a file_buffer_t */
+            uint8_t *serialized = NULL;
+            size_t serialized_size = 0;
+            result = lzw_serialize(compressed, &serialized, &serialized_size);
+            
+            if (result != LZW_SUCCESS) {
+                lzw_free_compressed(compressed);
+                LOG_ERROR("LZW serialization failed: %d", result);
+                return GSEA_ERROR_COMPRESSION;
+            }
+            
+            /* Copiar al buffer de salida */
+            output->data = serialized;
+            output->size = serialized_size;
+            output->capacity = serialized_size;
+            
+            lzw_free_compressed(compressed);
             return GSEA_SUCCESS;
         }
             
@@ -162,6 +192,35 @@ int decompress_data(const file_buffer_t *input, file_buffer_t *output,
             output->capacity = decompressed_size;
             
             rle_free_compressed(compressed);
+            return GSEA_SUCCESS;
+        }
+        case COMP_LZW: {
+            /* Deserializar desde file_buffer_t */
+            lzw_compressed_t *compressed = NULL;
+            int result = lzw_deserialize(input->data, input->size, &compressed);
+            
+            if (result != LZW_SUCCESS) {
+                LOG_ERROR("LZW deserialization failed: %d", result);
+                return GSEA_ERROR_COMPRESSION;
+            }
+            
+            /* Descomprimir */
+            uint8_t *decompressed = NULL;
+            size_t decompressed_size = 0;
+            result = lzw_decompress(compressed, &decompressed, &decompressed_size);
+            
+            if (result != LZW_SUCCESS) {
+                lzw_free_compressed(compressed);
+                LOG_ERROR("LZW decompression failed: %d", result);
+                return GSEA_ERROR_COMPRESSION;
+            }
+            
+            /* Copiar al buffer de salida */
+            output->data = decompressed;
+            output->size = decompressed_size;
+            output->capacity = decompressed_size;
+            
+            lzw_free_compressed(compressed);
             return GSEA_SUCCESS;
         }
             

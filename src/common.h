@@ -48,7 +48,8 @@ typedef enum {
 typedef enum {
     COMP_LZ77,
     COMP_HUFFMAN,
-    COMP_RLE
+    COMP_RLE,
+    COMP_LZW        
 } compression_algorithm_t;
 
 typedef enum {
@@ -56,7 +57,8 @@ typedef enum {
     ENC_CHACHA20,
     ENC_SALSA20,
     ENC_DES,
-    ENC_VIGENERE
+    ENC_VIGENERE,
+    ENC_RC4         
 } encryption_algorithm_t;
 
 /* ==============================

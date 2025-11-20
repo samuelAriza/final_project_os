@@ -223,8 +223,8 @@ class GSEABenchmark:
             raise FileNotFoundError(f"Binary not found: {self.binary_path}")
         
         # Algorithm configurations
-        self.compression_algorithms = ["lz77", "huffman", "rle"]
-        self.encryption_algorithms = ["aes128", "chacha20", "salsa20"]
+        self.compression_algorithms = ["lz77", "huffman", "rle", "lzw"]
+        self.encryption_algorithms = ["aes128", "chacha20", "salsa20", "rc4"]
         
         # Results storage
         self.results: List[BenchmarkResult] = []
